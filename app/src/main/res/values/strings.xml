@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">GPSNausore</string>
+    <string name="access_token" translatable="false">pk.eyJ1IjoibWFyaW5vbGl2aWVyIiwiYSI6ImNqaDBkdHpoMjBuYzkycXJ5bXQ4MHJvb3UifQ.Vtg7CL7aLl4et-X6ZJL6Pg</string>
+</resources>
