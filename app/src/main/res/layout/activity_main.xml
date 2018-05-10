@@ -18,6 +18,7 @@
 
     <Button
         android:id="@+id/startButton"
+<<<<<<< HEAD
         style="@android:style/Widget.Material.Button.Borderless.Colored"
         android:layout_width="70dp"
         android:layout_height="wrap_content"
@@ -31,4 +32,17 @@
         android:text="GO"
         android:textColor="@color/mapboxWhite" />
 
+=======
+        android:layout_width="74dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginBottom="15dp"
+        android:layout_marginEnd="13dp"
+        android:background="@color/mapboxGrayLight"
+        android:enabled="false"
+        android:padding="5px"
+        android:text="Start"
+        android:textColor="@color/mapboxWhite" />
+>>>>>>> v2
 </RelativeLayout>

@@ -23,20 +23,49 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.android.support:appcompat-v7:27.0.2'
+    // Support libraries
+    implementation dependenciesList.supportGridLayout
+    implementation dependenciesList.supportAppcompatV7
+    implementation dependenciesList.supportCardView
+    implementation dependenciesList.supportRecyclerView
+    implementation dependenciesList.supportDesign
+    implementation dependenciesList.supportCustomTabs
+    implementation dependenciesList.supportV4
+    implementation dependenciesList.supportConstraintLayout
 
-    implementation 'com.android.support.constraint:constraint-layout:1.1.0'
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    // Mapbox dependencies
+    api(dependenciesList.mapboxMapSdk)
+    implementation dependenciesList.mapboxTurf
+    implementation dependenciesList.mapboxGeoJson
 
-    implementation ('com.mapbox.mapboxsdk:mapbox-android-sdk:5.5.2@aar') {
-        transitive=true
-    }
-    implementation 'com.mapbox.mapboxsdk:mapbox-android-navigation:0.12.0'
-    implementation ('com.mapbox.mapboxsdk:mapbox-android-navigation-ui:0.12.0') {
-        transitive = true
-    }
+    // Mapbox plugins
+    implementation dependenciesList.mapboxPluginLocationLayer
+    implementation dependenciesList.mapboxPluginBuilding
+    implementation dependenciesList.mapboxPluginMarkerCluster
+    implementation dependenciesList.mapboxPluginPlaces
+    implementation dependenciesList.mapboxPluginLocalization
+    implementation dependenciesList.mapboxPluginTraffic
 
+    // Firebase
+    implementation dependenciesList.firebaseCrash
+    implementation dependenciesList.firebasePerf
+    gpservicesImplementation dependenciesList.firebaseCrash
+
+    // Other dependencies
+    implementation dependenciesList.gson
+
+    implementation 'com.github.javiersantos:MaterialStyledDialogs:2.1'
+    implementation 'com.getbase:floatingactionbutton:1.10.1'
+    implementation 'com.afollestad.material-dialogs:commons:0.9.6.0'
+    implementation 'com.github.Cutta:GifView:1.1'
+
+    // Square crew
+    implementation dependenciesList.timber
+    implementation dependenciesList.okhttp3
+    implementation dependenciesList.picasso
+    implementation dependenciesList.retrofit
+    implementation dependenciesList.retrofitGsonConverter
+
+    // Common module
+    implementation project(':SharedCode')
 }

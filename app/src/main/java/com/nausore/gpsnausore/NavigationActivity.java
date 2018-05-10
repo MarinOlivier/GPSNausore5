@@ -1,210 +1,68 @@
 package com.nausore.gpsnausore;
-
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
+import android.widget.Toast;
 
-import com.mapbox.api.directions.v5.models.DirectionsResponse;
-import com.mapbox.api.directions.v5.models.DirectionsRoute;
-import com.mapbox.geojson.Point;
+import com.mapbox.android.core.location.LocationEngine;
+import com.mapbox.android.core.location.LocationEngineListener;
+import com.mapbox.android.core.location.LocationEnginePriority;
+import com.mapbox.android.core.location.LocationEngineProvider;
+import com.mapbox.android.core.permissions.PermissionsListener;
+import com.mapbox.android.core.permissions.PermissionsManager;
 import com.mapbox.mapboxsdk.Mapbox;
-import com.mapbox.mapboxsdk.annotations.Marker;
-import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
-import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerMode;
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin;
-import com.mapbox.services.android.location.LostLocationEngine;
-import com.mapbox.services.android.navigation.ui.v5.NavigationLauncher;
-import com.mapbox.services.android.navigation.ui.v5.NavigationLauncherOptions;
-import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
-import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
-import com.mapbox.services.android.telemetry.location.LocationEngine;
-import com.mapbox.services.android.telemetry.location.LocationEngineListener;
-import com.mapbox.services.android.telemetry.location.LocationEnginePriority;
-import com.mapbox.services.android.telemetry.permissions.PermissionsListener;
-import com.mapbox.services.android.telemetry.permissions.PermissionsManager;
 
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+/**
+ * Use the Location Layer plugin to easily add a device location "puck" to a Mapbox map.
+ */
+public class LocationPluginActivity extends AppCompatActivity implements LocationEngineListener, PermissionsListener {
 
-// classes needed to initialize map
-// classes needed to add location layer
-// classes needed to add a marker
-// classes to calculate a route
-// classes needed to launch navigation UI
-// classes needed to add location layer
-// classes needed to add a marker
-// classes to calculate a route
-// classes needed to launch navigation UI
-
-
-public class NavigationActivity extends AppCompatActivity implements LocationEngineListener, PermissionsListener {
-
-
-    private MapView mapView;
-
-
-    // variables for adding location layer
-    private MapboxMap map;
     private PermissionsManager permissionsManager;
     private LocationLayerPlugin locationPlugin;
     private LocationEngine locationEngine;
-    private Location originLocation;
-
-
-    // variables for adding a marker
-    private Marker destinationMarker;
-    private LatLng originCoord;
-    private LatLng destinationCoord;
-
-
-    // variables for calculating and drawing a route
-    private Point originPosition;
-    private Point destinationPosition;
-    private DirectionsRoute currentRoute;
-    private static final String TAG = "DirectionsActivity";
-    private NavigationMapRoute navigationMapRoute;
-
-
-    private Button button;
-
+    private MapboxMap mapboxMap;
+    private MapView mapView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Mapbox access token is configured here. This needs to be called either in your application
+        // object or in the same activity which contains the mapview.
         Mapbox.getInstance(this, getString(R.string.access_token));
-        //setContentView(R.layout.activity_draw_navigation);
+
+        // This contains the MapView in XML and needs to be called after the access token is configured.
         setContentView(R.layout.activity_main);
-        mapView = (MapView) findViewById(R.id.mapView);
+
+        mapView = findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
-
-
         mapView.getMapAsync(new OnMapReadyCallback() {
             @Override
-            public void onMapReady(final MapboxMap mapboxMap) {
-
-
-                map = mapboxMap;
+            public void onMapReady(MapboxMap mapboxMap) {
+                LocationPluginActivity.this.mapboxMap = mapboxMap;
                 enableLocationPlugin();
-
-
-                originCoord = new LatLng(originLocation.getLatitude(), originLocation.getLongitude());
-                mapboxMap.addOnMapClickListener(new MapboxMap.OnMapClickListener() {
-                    @Override
-                    public void onMapClick(@NonNull LatLng point) {
-                        if (destinationMarker != null) {
-                            mapboxMap.removeMarker(destinationMarker);
-                        }
-                        destinationCoord = point;
-                        destinationMarker = mapboxMap.addMarker(new MarkerOptions()
-                                .position(destinationCoord)
-                        );
-
-
-                        destinationPosition = Point.fromLngLat(destinationCoord.getLongitude(), destinationCoord.getLatitude());
-                        originPosition = Point.fromLngLat(originCoord.getLongitude(), originCoord.getLatitude());
-                        getRoute(originPosition, destinationPosition);
-
-
-                        button.setEnabled(true);
-                        button.setBackgroundResource(R.color.mapboxBlue);
-
-
-                    }
-
-                    ;
-                });
-
-
-                button = findViewById(R.id.startButton);
-                button.setOnClickListener(new View.OnClickListener() {
-                    public void onClick(View v) {
-                        Point origin = originPosition;
-                        Point destination = destinationPosition;
-                        // Pass in your Amazon Polly pool id for speech synthesis using Amazon Polly
-                        // Set to null to use the default Android speech synthesizer
-                        String awsPoolId = null;
-                        boolean simulateRoute = true;
-                        NavigationLauncherOptions options = NavigationLauncherOptions.builder()
-                                .origin(origin)
-                                .destination(destination)
-                                .awsPoolId(awsPoolId)
-                                .shouldSimulateRoute(simulateRoute)
-                                .build();
-
-                        // Call this method with Context from within an Activity
-                        NavigationLauncher.startNavigation(NavigationActivity.this, options);
-                    }
-                });
-
-
             }
-
-            ;
         });
-
-
     }
-
-
-    private void getRoute(Point origin, Point destination) {
-        NavigationRoute.builder()
-                .accessToken(Mapbox.getAccessToken())
-                .origin(origin)
-                .destination(destination)
-                .build()
-                .getRoute(new Callback<DirectionsResponse>() {
-                    @Override
-                    public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
-                        // You can get the generic HTTP info about the response
-                        Log.d(TAG, "Response code: " + response.code());
-                        if (response.body() == null) {
-                            Log.e(TAG, "No routes found, make sure you set the right user and access token.");
-                            return;
-                        } else if (response.body().routes().size() < 1) {
-                            Log.e(TAG, "No routes found");
-                            return;
-                        }
-
-                        currentRoute = response.body().routes().get(0);
-
-                        // Draw the route on the map
-                        if (navigationMapRoute != null) {
-                            navigationMapRoute.removeRoute();
-                        } else {
-                            navigationMapRoute = new NavigationMapRoute(null, mapView, map, R.style.NavigationMapRoute);
-                        }
-                        navigationMapRoute.addRoute(currentRoute);
-                    }
-
-                    @Override
-                    public void onFailure(Call<DirectionsResponse> call, Throwable throwable) {
-                        Log.e(TAG, "Error: " + throwable.getMessage());
-                    }
-                });
-    }
-
 
     @SuppressWarnings( {"MissingPermission"})
     private void enableLocationPlugin() {
         // Check if permissions are enabled and if not request
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
-            // Create an instance of LOST location engine
+            // Create a location engine instance
             initializeLocationEngine();
 
-            locationPlugin = new LocationLayerPlugin(mapView, map, locationEngine);
-            locationPlugin.setLocationLayerEnabled(LocationLayerMode.TRACKING);
+            locationPlugin = new LocationLayerPlugin(mapView, mapboxMap, locationEngine);
+            locationPlugin.setLocationLayerEnabled(true);
         } else {
             permissionsManager = new PermissionsManager(this);
             permissionsManager.requestLocationPermissions(this);
@@ -213,13 +71,12 @@ public class NavigationActivity extends AppCompatActivity implements LocationEng
 
     @SuppressWarnings( {"MissingPermission"})
     private void initializeLocationEngine() {
-        locationEngine = new LostLocationEngine(NavigationActivity.this);
+        locationEngine = new LocationEngineProvider(this).obtainBestLocationEngineAvailable();
         locationEngine.setPriority(LocationEnginePriority.HIGH_ACCURACY);
         locationEngine.activate();
 
         Location lastLocation = locationEngine.getLastLocation();
         if (lastLocation != null) {
-            originLocation = lastLocation;
             setCameraPosition(lastLocation);
         } else {
             locationEngine.addLocationEngineListener(this);
@@ -227,8 +84,8 @@ public class NavigationActivity extends AppCompatActivity implements LocationEng
     }
 
     private void setCameraPosition(Location location) {
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                new LatLng(location.getLatitude(), location.getLongitude()), 13));
+        mapboxMap.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                new LatLng(location.getLatitude(), location.getLongitude()), 16));
     }
 
     @Override
@@ -246,6 +103,7 @@ public class NavigationActivity extends AppCompatActivity implements LocationEng
         if (granted) {
             enableLocationPlugin();
         } else {
+            Toast.makeText(this, R.string.user_location_permission_not_granted, Toast.LENGTH_LONG).show();
             finish();
         }
     }
@@ -259,7 +117,6 @@ public class NavigationActivity extends AppCompatActivity implements LocationEng
     @Override
     public void onLocationChanged(Location location) {
         if (location != null) {
-            originLocation = location;
             setCameraPosition(location);
             locationEngine.removeLocationEngineListener(this);
         }
@@ -269,13 +126,22 @@ public class NavigationActivity extends AppCompatActivity implements LocationEng
     @SuppressWarnings( {"MissingPermission"})
     protected void onStart() {
         super.onStart();
-        if (locationEngine != null) {
-            locationEngine.requestLocationUpdates();
-        }
         if (locationPlugin != null) {
             locationPlugin.onStart();
         }
         mapView.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mapView.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mapView.onPause();
     }
 
     @Override
@@ -288,6 +154,12 @@ public class NavigationActivity extends AppCompatActivity implements LocationEng
             locationPlugin.onStop();
         }
         mapView.onStop();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mapView.onSaveInstanceState(outState);
     }
 
     @Override
@@ -304,24 +176,4 @@ public class NavigationActivity extends AppCompatActivity implements LocationEng
         super.onLowMemory();
         mapView.onLowMemory();
     }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mapView.onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        mapView.onPause();
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        mapView.onSaveInstanceState(outState);
-    }
-
-
 }
